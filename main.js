@@ -95,6 +95,10 @@ var imageManager = new ImagePreloader([
     [{ "jump" : "https://github.com/PhyG0/BigSmallTall/raw/main/jump2.wav" }],
     [{ "jump2" : "https://github.com/PhyG0/BigSmallTall/raw/main/jump.wav" }],
     [{ "jump3" : "https://github.com/PhyG0/BigSmallTall/raw/main/jump3.wav" }],
+    [{ "trans" : "https://github.com/PhyG0/BigSmallTall/raw/main/trans.mp3" }],
+    [{ "portal" : "https://github.com/PhyG0/BigSmallTall/raw/main/portal.wav" }],
+    [{ "select" : "https://github.com/PhyG0/BigSmallTall/raw/main/select.wav" }],
+    [{ "btn" : "https://github.com/PhyG0/BigSmallTall/raw/main/btn.wav" }],
 ]);
 
 
@@ -112,7 +116,7 @@ var keys_buffer_ctx = keys_buffer.getContext("2d");
 var CURRENT_PORTAL, DOORS = [];
 var uiat = "menu";
 var levelsArray = Object.values(Levels);
-let LoadingPoint = pg.Physics.Vector(game.Scenes["ui"].Camera.worldWidth/2, 0.5 * game.Scenes["ui"].Camera.worldHeight);
+let LoadingPoint = pg.Physics.Vector(2 * game.Scenes["ui"].Camera.worldWidth, 0.5 * game.Scenes["ui"].Camera.worldHeight);
 //Big - player
 let bigRect = pg.Physics.Rectangle(pg.Physics.Vector(227, 116), 40 * PLAYER_SIZE_FACTOR, 40 * PLAYER_SIZE_FACTOR);
 var bigT1 = 0;
@@ -178,11 +182,15 @@ var jumpBtn = pg.Ui.Button(game.Screen.Main.width/2, game.Screen.Main.height/1.2
 var shiftBtn = pg.Ui.Button(game.Screen.Main.width/1.3, game.Screen.Main.height/1.25, 105, 100, "Switch");
 var backBtn = pg.Ui.Button(game.Screen.Main.width - 80, 0, 80, 50, "Menu");
 backBtn.onrelease = () =>{
+    ASSETS.trans.currentTime = 0;
+    ASSETS.trans.play();
     game.CurrentScene = "ui";
     uiat = "menu";
+    ASSETS.btn.play();
 }
 var restartBtn = pg.Ui.Button(game.Screen.Main.width - 190, 0, 100, 50, "Restart");
 restartBtn.onrelease = () =>{
+    ASSETS.btn.play();
     LevelGenerator(game.Scenes["Main"], levelsArray[game.count], ASSETS);
     return;
 }
@@ -192,16 +200,25 @@ var menuButtons = [];
 let playBtn = pg.Ui.Button(game.Scenes["ui"].Camera.worldWidth/2 - 50, 2 * game.Scenes["ui"].Camera.worldHeight - 30, 130, 50, "Play");
 let Credits = pg.Ui.Button(game.Scenes["ui"].Camera.worldWidth/2 - 50, 2 * game.Scenes["ui"].Camera.worldHeight + 40, 130, 50, "Credits");
 playBtn.onrelease = () =>{
+    ASSETS.trans.currentTime = 0;
+    ASSETS.trans.play();
     uiat = "level";
+    ASSETS.btn.play();
 }
 Credits.onrelease = () =>{
+    ASSETS.btn.play();
+    ASSETS.trans.currentTime = 0;
+    ASSETS.trans.play();
     uiat = "credits";
 }
 menuButtons.push(playBtn);
 menuButtons.push(Credits);
 let backCred = pg.Ui.Button(game.Scenes["ui"].Camera.worldWidth/2 - 30, -2 * game.Scenes["ui"].Camera.worldHeight, 80, 60, "BACK");
 backCred.onrelease = () =>{
+    ASSETS.btn.play();
     uiat = "menu";
+    ASSETS.trans.currentTime = 0;
+    ASSETS.trans.play();
 }
 menuButtons.push(backCred);
 
@@ -209,8 +226,8 @@ menuButtons.push(backCred);
 jumpBtn.onclick = () =>{
     if(players[selectedPlayer].sides.bottom.size != 0){
         if(selectedPlayer == 0) ASSETS.jump.play();
-        if(selectedPlayer == 1) ASSETS.jump2.play();
-        if(selectedPlayer == 2) ASSETS.jump3.play();
+        if(selectedPlayer == 1) ASSETS.jump3.play();
+        if(selectedPlayer == 2) ASSETS.jump2.play();
         players[selectedPlayer].body.velocity.y = -200 / players[selectedPlayer].body.mass;
     }
 }
@@ -242,6 +259,7 @@ function shiftPlayer(){
 }
 shiftBtn.onclick = () =>{
     shiftPlayer();
+    ASSETS.select.play();
     game.Scene.Camera.SetTarget(players[selectedPlayer]);
     //RESET CURRENT TIME
     CURRENT_TIME = 0;
@@ -259,6 +277,7 @@ function LevelGenerator(scene, level, data){
         player.props.angle = 0;
         player.props.scale = 1;
         player.props.keyCount = 0;
+        player.props.played = false;
     });
     game.count = level.count;
     game.CurrentScene = "Main";
@@ -276,7 +295,7 @@ function LevelGenerator(scene, level, data){
     scene.AddEntity(bigEnt);
     scene.AddEntity(smallEnt);
     scene.AddEntity(tallEnt);
-    scene.Camera.SetTarget(tallEnt);
+    scene.Camera.SetTarget(players[selectedPlayer]);
     let lvlP = pg.Util.LevelParser(level.map);
     let ents = lvlP.getEntities(level.cover);
     let portal = lvlP.getPortal(level.portal, "portal2");
@@ -288,6 +307,7 @@ function LevelGenerator(scene, level, data){
         scene.AddEntity(key);
         key.AddCollision("d-big", (e)=>{
             if(!key.props.owned){
+                ASSETS.pick.currentTime = 0;
                 ASSETS.pick.play();
                 e.props.keyCount += 1;
                 key.sprite = pg.Renderer.Custom(()=>{});
@@ -296,6 +316,7 @@ function LevelGenerator(scene, level, data){
         });
         key.AddCollision("d-small", (e)=>{
             if(!key.props.owned){
+                ASSETS.pick.currentTime = 0;
                 ASSETS.pick.play();
                 e.props.keyCount += 1;
                 key.sprite = pg.Renderer.Custom(()=>{});
@@ -304,6 +325,7 @@ function LevelGenerator(scene, level, data){
         });
         key.AddCollision("d-tall", (e)=>{
             if(!key.props.owned){
+                ASSETS.pick.currentTime = 0;
                 ASSETS.pick.play();
                 e.props.keyCount += 1;
                 key.sprite = pg.Renderer.Custom(()=>{});
@@ -318,6 +340,7 @@ function LevelGenerator(scene, level, data){
         door.AddCollision("r-small", (e)=>{
             if(!door.props.unlocked){
                 if(e.props.keyCount > 0){
+                    ASSETS.open.currentTime = 0;
                     ASSETS.open.play();
                     door.props.unlocked = true;
                     e.props.keyCount -= 1;
@@ -327,6 +350,7 @@ function LevelGenerator(scene, level, data){
         door.AddCollision("r-big", (e)=>{
             if(!door.props.unlocked){
                 if(e.props.keyCount > 0){
+                    ASSETS.open.currentTime = 0;
                     ASSETS.open.play();
                     door.props.unlocked = true;
                     e.props.keyCount -= 1;
@@ -336,6 +360,7 @@ function LevelGenerator(scene, level, data){
         door.AddCollision("r-tall", (e)=>{
             if(!door.props.unlocked){
                 if(e.props.keyCount > 0){
+                    ASSETS.open.currentTime = 0;
                     ASSETS.open.play();
                     door.props.unlocked = true;
                     e.props.keyCount -= 1;
@@ -349,6 +374,10 @@ function LevelGenerator(scene, level, data){
     CURRENT_PORTAL = portal;
     players.forEach(player=>{
         portal.AddCollision(`d-${player.uniqueName}`, ()=>{
+            if(!player.props.played){
+                ASSETS.portal.play();
+                player.props.played = true;
+            }
             player.props.reachedPortal = true;
         });
     });
@@ -372,20 +401,11 @@ function LevelGenerator(scene, level, data){
 
 let uiLevels = [];
 
-window.addEventListener("pointerdown", ()=>{
-    CLICKED = true;
-});
 
 LoadedData(imageManager).then(data=>{
     if(Object.keys(data).length == imageManager.total){
         ASSETS_LOADED = true;
     }
-    data.bg.loop =  true;
-    window.addEventListener("pointerdown", ()=>{
-        if(CLICKED){
-            data.bg.play(); 
-        }
-    });
     keys_buffer_ctx.fillStyle = "rgba(30, 40, 50, 0.6)";
     keys_buffer_ctx.fillRect(0, 0, 100, 30);
 
@@ -394,14 +414,19 @@ LoadedData(imageManager).then(data=>{
         let btn = pg.Ui.Button(110 * i + 50, UiScene.Camera.worldHeight/2 - 100, 80, 60, `Level-${i}`);
         btn.onrelease = () =>{
             LevelGenerator(game.Scenes["Main"], levelsArray[i], data);
+            ASSETS.btn.play();
         }
         uiLevels.push(btn);
     }
     let men = pg.Ui.Button(uiLevels[0].x, uiLevels[0].y - 70, 1.5 * uiLevels[0].w, uiLevels[0].h, "Menu");
     men.onrelease = () =>{
         uiat = "menu";
+        ASSETS.trans.currentTime = 0;
+        ASSETS.trans.play();
+        ASSETS.btn.play();
     }
     uiLevels.push(men);
+    ASSETS.jump3.volume = 0.8;
 });
 
 game.DrawTopLayers = (c) =>{
@@ -452,6 +477,7 @@ function _threeDraw(c){
     c.restore();
 }
 
+let done = false;
 game.Draw = (c) =>{
     //Have to change background
     if(game.Scene.active){
@@ -497,7 +523,8 @@ game.Draw = (c) =>{
             btn.state.on = false;
         });
     }else{
-        if(ASSETS_LOADED && CLICKED){
+        if(ASSETS_LOADED){
+            if(CLICKED){
             if(uiat == "menu"){
                 LoadingPoint = pg.Physics.Vector(game.Scenes["ui"].Camera.worldWidth/2, 2 * game.Scenes["ui"].Camera.worldHeight);
             }else if(uiat == "level"){
@@ -548,25 +575,33 @@ game.Draw = (c) =>{
             c.fillText("Big-Small-Tall ", game.Scenes["ui"].Camera.worldWidth/2, -2 * game.Scenes["ui"].Camera.worldHeight - 100);
             c.restore();
         }else{
+            if(!done){
+                window.addEventListener("pointerdown", ()=>{
+                    CLICKED = true;
+                    ASSETS.bg.play();
+                    ASSETS.bg.loop = true; 
+                });
+                done = true;
+            }
+            c.fillStyle = "rgb(100, 100, 130)";
+            c.font = "35px Mochiy Pop P One";
+            c.fillText(`Click Anywhere`, 1.5 * game.Scenes["ui"].Camera.worldWidth + 100, game.Scenes["ui"].Camera.worldHeight/2);
+        }
+        }else{
             //Loading screen
             LoadingPoint = pg.Physics.Vector(2 * game.Scenes["ui"].Camera.worldWidth, 0.5 * game.Scenes["ui"].Camera.worldHeight);
             game.Scene.Camera.LookAt(LoadingPoint);
-            if(CLICKED){
-                c.save();
-                c.fillStyle = "rgb(100, 100, 130)";
-                c.font = "35px Mochiy Pop P One";
-                c.fillText(`Loading Assets...( ${imageManager.load}/${imageManager.total} )`, 1.5 * game.Scenes["ui"].Camera.worldWidth + 100, game.Scenes["ui"].Camera.worldHeight/2);
-                c.fillStyle = "green";
-                c.fillRect(1.5 * game.Scenes["ui"].Camera.worldWidth + 120, game.Scenes["ui"].Camera.worldHeight/1.9, imageManager.load * (400/(imageManager.total)), 30);
-                c.strokeStyle = "black";
-                c.lineWidth = 3;
-                c.strokeRect(1.5 * game.Scenes["ui"].Camera.worldWidth + 120, game.Scenes["ui"].Camera.worldHeight/1.9, 400, 30);
-                c.restore();
-            }else{
-                c.fillStyle = "rgb(100, 100, 130)";
-                c.font = "35px Mochiy Pop P One";
-                c.fillText(`Click Anywhere`, 1.5 * game.Scenes["ui"].Camera.worldWidth + 100, game.Scenes["ui"].Camera.worldHeight/2);
-            }
+            c.save();
+            c.fillStyle = "rgb(100, 100, 130)";
+            c.font = "35px Mochiy Pop P One";
+            c.fillText(`Loading Assets...( ${imageManager.load}/${imageManager.total} )`, 1.5 * game.Scenes["ui"].Camera.worldWidth + 50, game.Scenes["ui"].Camera.worldHeight/2);
+            c.fillStyle = "green";
+            c.fillRect(1.5 * game.Scenes["ui"].Camera.worldWidth + 120, game.Scenes["ui"].Camera.worldHeight/1.9, imageManager.load * (400/(imageManager.total)), 30);
+            c.strokeStyle = "black";
+            c.lineWidth = 3;
+            c.strokeRect(1.5 * game.Scenes["ui"].Camera.worldWidth + 120, game.Scenes["ui"].Camera.worldHeight/1.9, 400, 30);
+            c.restore();
+            
         }
     }
 }
@@ -647,6 +682,3 @@ game.Update = (dt) =>{
         });
     }
 }
-
-
-
