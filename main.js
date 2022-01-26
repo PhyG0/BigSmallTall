@@ -184,8 +184,10 @@ var backBtn = pg.Ui.Button(game.Screen.Main.width - 80, 0, 80, 50, "Menu");
 backBtn.onrelease = () =>{
     ASSETS.trans.currentTime = 0;
     ASSETS.trans.play();
-    game.CurrentScene = "ui";
-    uiat = "menu";
+    game.SceneTrans(()=>{
+        game.CurrentScene = "ui";
+        uiat = "menu";
+    });
     ASSETS.btn.play();
 }
 var restartBtn = pg.Ui.Button(game.Screen.Main.width - 190, 0, 100, 50, "Restart");
