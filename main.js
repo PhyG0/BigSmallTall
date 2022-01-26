@@ -98,7 +98,7 @@ var imageManager = new ImagePreloader([
     [{ "trans" : "https://github.com/PhyG0/BigSmallTall/raw/main/trans.mp3" }],
     [{ "portal" : "https://github.com/PhyG0/BigSmallTall/raw/main/portal.wav" }],
     [{ "select" : "https://github.com/PhyG0/BigSmallTall/raw/main/select.wav" }],
-    [{ "btn" : "https://github.com/PhyG0/BigSmallTall/raw/main/btn.wav" }],
+    [{ "btn" : "https://github.com/PhyG0/BigSmallTall/raw/main/btn.mp3" }],
 ]);
 
 
