@@ -7,7 +7,7 @@ var game = pg.Game({
         camera_options:{
             worldWidth : 700,
             worldHeight : 750,
-            zoom : 1,
+            zoom : 0.8,
             lockCamera : false,
         },
         boundry : true
@@ -25,7 +25,6 @@ var UiScene = pg.Scene({
     boundry : false
 });
 game.AddScene("ui", UiScene);
-UiScene.Camera.LookAt(UiScene.CENTER);
 game.CurrentScene = "ui";
 
 game.Start();
@@ -99,6 +98,8 @@ var imageManager = new ImagePreloader([
     [{ "portal" : "https://github.com/PhyG0/BigSmallTall/raw/main/portal.wav" }],
     [{ "select" : "https://github.com/PhyG0/BigSmallTall/raw/main/select.wav" }],
     [{ "btn" : "https://github.com/PhyG0/BigSmallTall/raw/main/btn.mp3" }],
+    [{ "death" : "https://github.com/PhyG0/BigSmallTall/raw/main/death.wav" }],
+    [{ "onit" : "https://github.com/PhyG0/BigSmallTall/raw/main/mooo.wav" }],
 ]);
 
 
@@ -108,6 +109,7 @@ var CURRENT_TIME = 0;
 var GRAVITY = 1300;
 var ASSETS_LOADED = false;
 var ASSETS = [];
+var BTNS = [];
 var PLAYER_SIZE_FACTOR = 1.3;
 var CLICKED = false;
 var gradControl = [pg.Util.Random(0, 255),  pg.Util.Random(0, 255), pg.Util.Random(0, 255)]
@@ -168,10 +170,11 @@ players.forEach(player=>{
     player.props.animationTime = 100;
     player.props.angle = 0;
     player.props.scale = 1;
+    player.props.dead = false;
+    player.props.played = true;
     player.props.keyCount = 0;
 });
 var selectedPlayer = 2;
-
 //Joystick - Init - movement
 let js = new pg.Ui.Joystick({
     center : pg.Physics.Vector(game.Screen.Main.width/4, game.Screen.Main.height/1.15)
@@ -243,15 +246,19 @@ function shiftPlayer(){
     }
     if(allShifted){
         //Level finished
+        game.count = (game.count + 1) % (levelsArray.length); 
+        uiLevels[game.count].text = "Level-" + (game.count + 1);
+        uiLevels[game.count].enabled = true;
+        LevelGenerator(game.Scenes["Main"], levelsArray[game.count], ASSETS);
         players.forEach(player=>{
             player.props.reachedPortal = false;
+            player.props.played = false;
+            player.props.played2 = true;
             player.props.animationTime = 100;
             player.props.angle = 0;
             player.props.scale = 1;
             player.props.keyCount = 0;
         });
-        game.count = (game.count + 1) % (levelsArray.length); 
-        LevelGenerator(game.Scenes["Main"], levelsArray[game.count], ASSETS);
         return;
     }
     selectedPlayer = (selectedPlayer + 1) % (players.length);
@@ -276,14 +283,15 @@ function LevelGenerator(scene, level, data){
     players.forEach(player=>{
         player.props.reachedPortal = false;
         player.props.animationTime = 100;
+        player.props.dead = false;
         player.props.angle = 0;
         player.props.scale = 1;
         player.props.keyCount = 0;
         player.props.played = false;
+        player.props.played2 = true;
     });
     game.count = level.count;
     game.CurrentScene = "Main";
-    scene.active = true;
     scene.entities = [];
     scene.Camera.worldWidth = level.width;
     scene.Camera.worldHeight = level.height;
@@ -294,15 +302,45 @@ function LevelGenerator(scene, level, data){
     bigEnt.body.Translate(bigD.Sub(bigEnt.body.center));
     smallEnt.body.Translate(smallD.Sub(smallEnt.body.center));
     tallEnt.body.Translate(tallD.Sub(tallEnt.body.center));
-    scene.AddEntity(bigEnt);
-    scene.AddEntity(smallEnt);
-    scene.AddEntity(tallEnt);
     scene.Camera.SetTarget(players[selectedPlayer]);
     let lvlP = pg.Util.LevelParser(level.map);
     let ents = lvlP.getEntities(level.cover);
+    let cover = lvlP.getCover(level.cover);
     let portal = lvlP.getPortal(level.portal, "portal2");
+    CURRENT_PORTAL = portal;
     let doors = lvlP.getDoors(level.doors, data.door);
     let keys = lvlP.getKeys(level.keys, data.key);
+    let lasers = [];
+    if(level.lasers){
+        let d = lvlP.getLaser(level.lasers,scene, ASSETS.onit);
+        lasers = d[0];
+        BTNS = d[1];
+    }
+    scene.AddEntity(bigEnt);
+    scene.AddEntity(smallEnt);
+    scene.AddEntity(tallEnt);
+    let spikes = [];
+    if(level.spikes){
+        spikes = lvlP.getSpikes(level.spikes);
+    }
+    spikes.forEach(spike=>{
+        scene.AddEntity(spike);
+        spike.AddCollision("r-big", ()=>{
+            LevelGenerator(game.Scenes["Main"], level, ASSETS);
+            spike.CollidingGroups.clear();
+            ASSETS.death.play();
+        });
+        spike.AddCollision("r-small", ()=>{
+            LevelGenerator(game.Scenes["Main"], level, ASSETS);
+            spike.CollidingGroups.clear();
+            ASSETS.death.play();
+        });
+        spike.AddCollision("r-tall", ()=>{
+            LevelGenerator(game.Scenes["Main"], level, ASSETS);
+            spike.CollidingGroups.clear();
+            ASSETS.death.play();
+        });
+    });
     keys.forEach(key=>{
         key.props = {};
         key.props.owned = false;
@@ -373,7 +411,6 @@ function LevelGenerator(scene, level, data){
     });
     scene.AddEntity(portal);
     let boxes = lvlP.getBoxes(level.boxes, data.box);
-    CURRENT_PORTAL = portal;
     players.forEach(player=>{
         portal.AddCollision(`d-${player.uniqueName}`, ()=>{
             if(!player.props.played){
@@ -387,17 +424,51 @@ function LevelGenerator(scene, level, data){
         box.AddCollision("r-big");
         box.AddCollision("r-small");
         box.AddCollision("r-tall");
+        box.AddCollision("r-box");
         ents.forEach(ent=>{
             ent.AddCollision(`r-${box.uniqueName}`);
         });
         scene.AddEntity(box);
     });
+    lasers.forEach(laser=>{
+        laser.AddCollision("d-big", ()=>{
+            if(laser.props.active){
+                LevelGenerator(game.Scenes["Main"], level, ASSETS);
+                laser.CollidingGroups.clear();
+            ASSETS.death.play();
+            bigEnt.props.dead = true;
+            }
+        });
+        laser.AddCollision("d-small", ()=>{
+            if(laser.props.active){
+                LevelGenerator(game.Scenes["Main"], level, ASSETS);
+                laser.CollidingGroups.clear();
+            ASSETS.death.play();
+            smallEnt.props.dead = true;
+            }
+        });
+        laser.AddCollision("d-tall", ()=>{
+            if(laser.props.active){
+                LevelGenerator(game.Scenes["Main"], level, ASSETS);
+                laser.CollidingGroups.clear();
+            ASSETS.death.play();
+            tallEnt.props.dead = true;
+
+            }
+        });
+        scene.AddEntity(laser);
+    });
     ents.forEach(ent=>{
         scene.AddEntity(ent);
-        ent.AddCollision("r-small");
         ent.AddCollision("r-big");
+        ent.AddCollision("r-small");
         ent.AddCollision("r-tall");
     });
+    cover.forEach(cov=>{
+        scene.AddEntity(cov);
+    });
+    scene.active = true;
+
 });
 }
 
@@ -412,15 +483,30 @@ LoadedData(imageManager).then(data=>{
     keys_buffer_ctx.fillRect(0, 0, 100, 30);
 
     ASSETS = data;
+    ASSETS.jump2.volume = 0.5;
+    ASSETS.jump3.volume = 0.5;
+    let j = 0;
+    let ii = 0;
     for(let i = 0; i < levelsArray.length; i++){
-        let btn = pg.Ui.Button(110 * i + 50, UiScene.Camera.worldHeight/2 - 100, 80, 60, `Level-${i}`);
+        ii++;
+        if(i % 3 == 0){
+            j++;
+            ii = 0;
+        }
+        let btn;
+        if(i != 0){
+            btn = pg.Ui.Button(140 * ii + 50, UiScene.Camera.worldHeight/2 - 300 + j * 150, 120, 80, `Locked`);
+        }else{
+            btn = pg.Ui.Button(140 * ii + 50, UiScene.Camera.worldHeight/2 - 300 + j * 150, 120, 80, `Level-${i + 1}`);
+        }
         btn.onrelease = () =>{
             LevelGenerator(game.Scenes["Main"], levelsArray[i], data);
             ASSETS.btn.play();
         }
+
         uiLevels.push(btn);
     }
-    let men = pg.Ui.Button(uiLevels[0].x, uiLevels[0].y - 70, 1.5 * uiLevels[0].w, uiLevels[0].h, "Menu");
+    let men = pg.Ui.Button(uiLevels[0].x, uiLevels[0].y - 120, 1.5 * uiLevels[0].w, uiLevels[0].h, "Menu");
     men.onrelease = () =>{
         uiat = "menu";
         ASSETS.trans.currentTime = 0;
@@ -668,6 +754,19 @@ game.Update = (dt) =>{
             smallEnt.body.velocity.x *= 0.9;
             tallEnt.body.velocity.x *= 0.9;
         }
+
+        BTNS.forEach(btn=>{
+            let col = false;
+            if(btn.sides.top.size != 0){
+                col = true;
+            }
+            if(!col){
+                btn.props.laser.props.active = true;
+                if(btn.props.e){
+                    btn.props.e.props.played2 = true;
+                }
+            }
+        });
     
         if(CURRENT_TIME < ARROW_TIME) CURRENT_TIME += dt * 100;
         players.forEach(player=>{
@@ -681,6 +780,13 @@ game.Update = (dt) =>{
                     player.props.angle += 0.1;
                 }
             }
+            if(player.props.dead){
+                player.body.velocity.x = 0;
+                player.body.velocity.y = 0;
+            }
         });
     }
 }
+
+
+
