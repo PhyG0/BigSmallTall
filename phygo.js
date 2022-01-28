@@ -226,6 +226,7 @@ const Phygo = (function(){
         constructor(params){
             this.width = 0;
             this.height = 0;
+            this.inCollision = false;
             this.sprite = params.sprite || undefined;
             this.body = params.body || undefined;
             this.center = params.center || this.body.center;
@@ -536,7 +537,12 @@ const Phygo = (function(){
                 }
             }
         }
-        if(detection) return detection;
+        if(detection){
+            // if(detection[0].collide){
+            //     console.log(detection);
+            // }
+            return detection;
+        }
         return [{ collide : false }];
     }
 
@@ -593,14 +599,26 @@ const Phygo = (function(){
             if(e1.mass < e2.mass){
                 massProp = (e1.mass / e2.mass) * 100;
                 if(b1.uniqueName == "box"){
-                    if(b2.uniqueName == "small" || b2.uniqueName == "tall"){
+                    if(b2.sides.left.values().next().value == undefined){
+                        b2.sides.left.add({ uniqueName : "sup" });
+                    }
+                    if(b2.sides.right.values().next().value == undefined){
+                        b2.sides.right.add({ uniqueName : "sup" });
+                    }
+                    if((b2.uniqueName == "small" && (b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry")) || (b2.uniqueName == "tall" && (b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                         e2.Translate(n.Scale(-d));   
                     }else{
                         e1.Translate(n.Scale((d - (d * (massProp / 100)))));
                         e2.Translate(n.Scale(-d * (massProp / 100)));   
                     }
                 }else if(b2.uniqueName == "box"){
-                    if(b1.uniqueName == "small" || b1.uniqueName == "tall"){
+                    if(b1.sides.left.values().next().value == undefined){
+                        b1.sides.left.add({ uniqueName : "sup" });
+                    }
+                    if(b1.sides.right.values().next().value == undefined){
+                        b1.sides.right.add({ uniqueName : "sup" });
+                    }
+                    if((b1.uniqueName == "small" && (b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry")) || (b1.uniqueName == "tall" && (b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                         e2.Translate(n.Scale(d));   
                     }else{
                         e1.Translate(n.Scale((d - (d * (massProp / 100)))));
@@ -614,14 +632,26 @@ const Phygo = (function(){
             if(e1.mass > e2.mass){
                 massProp = (e2.mass / e1.mass) * 100;
                 if(b1.uniqueName == "box"){
-                    if(b2.uniqueName == "small" || b2.uniqueName == "tall"){
+                    if(b2.sides.left.values().next().value == undefined){
+                        b2.sides.left.add({ uniqueName : "sup" });
+                    }
+                    if(b2.sides.right.values().next().value == undefined){
+                        b2.sides.right.add({ uniqueName : "sup" });
+                    }
+                    if((b2.uniqueName == "small" && (b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry"))|| (b2.uniqueName == "tall" && (b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                         e2.Translate(n.Scale(-d));
                     }else{
                         e2.Translate(n.Scale(-(d - (d * (massProp / 100)))));
                         e1.Translate(n.Scale(d * (massProp / 100))); 
                     }
                 }else if(b2.uniqueName == "box"){
-                    if(b1.uniqueName == "small" || b1.uniqueName == "tall"){
+                    if(b1.sides.left.values().next().value == undefined){
+                        b1.sides.left.add({ uniqueName : "sup" });
+                    }
+                    if(b1.sides.right.values().next().value == undefined){
+                        b2.sides.right.add({ uniqueName : "sup" });
+                    }
+                    if((b1.uniqueName == "small" && ( b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry")) || (b1.uniqueName == "tall" && (b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                         e1.Translate(n.Scale(d));
                     }else{
                         e2.Translate(n.Scale(-(d - (d * (massProp / 100)))));
@@ -658,7 +688,13 @@ const Phygo = (function(){
             e1.angularVelocity += Vector.Cross(rA, jt.Scale(1 / e1.inertia));
             e2.angularVelocity -= Vector.Cross(rB, jt.Scale(1 / e2.inertia));
             if(b1.uniqueName == "box"){
-                if(b2.uniqueName == "small" || b2.uniqueName == "tall"){
+                if(b2.sides.left.values().next().value == undefined){
+                    b2.sides.left.add({ uniqueName : "sup" });
+                }
+                if(b2.sides.right.values().next().value == undefined){
+                    b2.sides.right.add({ uniqueName : "sup" });
+                }
+                if((b2.uniqueName == "small" && ( b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry")) || (b2.uniqueName == "tall"&& (b2.sides.left.values().next().value.uniqueName != "&&&boundry" && b2.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                     e2.velocity = e2.velocity.Sub(jt.Scale(e2.inverseMass));
                     e2.velocity = e2.velocity.Sub(jn.Scale(e2.inverseMass));
                 }else{
@@ -668,7 +704,13 @@ const Phygo = (function(){
                     e2.velocity = e2.velocity.Sub(jn.Scale(e2.inverseMass));
                 }
             }else if(b2.uniqueName == "box"){
-                if(b1.uniqueName == "small" || b1.uniqueName == "tall"){
+                if(b1.sides.left.values().next().value == undefined){
+                    b1.sides.left.add({ uniqueName : "sup" });
+                }
+                if(b1.sides.right.values().next().value == undefined){
+                    b2.sides.right.add({ uniqueName : "sup" });
+                }
+                if((b1.uniqueName == "small"&& (b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry")) || (b1.uniqueName == "tall"&& (b1.sides.left.values().next().value.uniqueName != "&&&boundry" && b1.sides.right.values().next().value.uniqueName != "&&&boundry"))){
                     e1.velocity = e1.velocity.Add(jt.Scale(e1.inverseMass));
                     e1.velocity = e1.velocity.Add(jn.Scale(e1.inverseMass));
                 }else{
@@ -800,6 +842,7 @@ const Phygo = (function(){
                                             if(collision[0].collide){
                                                 if(ent._cbs[group]){
                                                     ent._cbs[group](near.userData);
+                                                    ent.sides.top.add("som");
                                                 }
                                             }
                                         }
@@ -982,6 +1025,143 @@ const Phygo = (function(){
         return Math.random() * (max - min) + min;
     }
 
+    static drawTriangle(c, x, y, size, angle){
+        c.save();
+        c.translate(x, y);
+        c.rotate(angle);
+        c.fillStyle = "white";
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(0,-size/2);
+        c.lineTo(-size/2 - size/6,size/2);
+        c.lineTo(size/2 + size/6, size/2);
+        c.closePath();
+        c.fill();
+        c.restore();
+    }
+
+    getSpikes(spikes){
+        let keyEnts = [];
+        for(let i = 0; i <= spikes.length-4; i += 4){
+            let pB = new Rectangle(new Vector(spikes[i], spikes[i + 1]), spikes[i + 2], spikes[i + 3]);
+            pB.mass = Infinity;
+            pB.inertia = Infinity;
+            let sprite = new Custom((c)=>{
+                for(let j = 0; j < Math.floor(pB.width/40); j++){
+                    LevelParser.drawTriangle(c, pB.center.x - pB.width/2 + 15 + j * 45, pB.center.y, 30, 0);
+                }
+            });
+            sprite.width = pB.width;
+            sprite.height = pB.height;
+            let e = new Entity({
+                name : `spike-${Math.round(LevelParser.random(0, 1000000))}`,
+                body : pB,
+                sprite : sprite,
+            });
+            e.width = pB.width;
+            e.height = pB.height;
+            keyEnts.push(e);
+        }
+        return keyEnts;
+    }
+
+    getLaser(laserData, scene, audio){
+        let lasers = [];
+        let btns = [];
+        for(let i = 0; i <= laserData.length - 8; i += 8){
+            let laserRect = new Rectangle(new Vector(laserData[i], laserData[i + 1]), laserData[i + 2], laserData[i + 3]);
+            laserRect.mass = Infinity;
+            laserRect.inertia = Infinity;
+            let colors = [`rgb(${LevelParser.random(200, 255)}, 10, 10)`, `rgb(255, 250, ${LevelParser.random(10, 50)})`];
+            let laser = new Entity({
+                name : `laser-${LevelParser.random(0, 100000)}`,
+                body : laserRect,
+            });
+            let sprite = new Custom((c)=>{
+                if(laser.props.active){
+                    c.save();
+                    c.shadowBlur = 10;
+                    c.shadowColor = '#FEF1BA';
+                    c.fillStyle = colors[Math.floor(LevelParser.random(0, 1.9))];
+                    c.fillRect(laserRect.center.x - laserRect.width/2, laserRect.center.y - laserRect.height/2, laserRect.width, laserRect.height);
+                    c.restore();
+                }
+                c.fillStyle = "rgb(100, 100, 100)";
+                c.fillRect(laserRect.center.x - 1.5 * laserRect.width, laserRect.center.y - laserRect.height/2, 3 * laserRect.width, laserRect.height/6);
+                c.fillRect(laserRect.center.x - 1.5 * laserRect.width, laserRect.center.y + laserRect.height/2 - laserRect.height/6, 3 * laserRect.width, laserRect.height/6);
+            });
+            laser.sprite = sprite;
+            laser.props = {
+                active : true,
+            };
+            lasers.push(laser);
+            let btnRect = new Rectangle(new Vector(laserData[i + 4], laserData[i + 5]), laserData[i + 6], laserData[i + 7]);
+            btnRect.mass = Infinity;
+            btnRect.inertia = Infinity;
+            let s = new Custom((c)=>{
+                if(laser.props.active){
+                    c.fillStyle = "rgb(50, 200, 50)";
+                    c.beginPath();
+                    c.arc(btnRect.center.x, btnRect.center.y, btnRect.width/2.5, Math.PI, 2 * Math.PI);
+                    c.closePath();
+                    c.fill();
+                }else{
+                    c.fillStyle = "rgb(200, 50, 50)";
+                    c.beginPath();
+                    c.arc(btnRect.center.x, btnRect.center.y, btnRect.width/3, Math.PI, 2 * Math.PI);
+                    c.closePath();
+                    c.fill();
+                }
+                c.fillStyle = "rgb(100, 100, 100)";
+                c.fillRect(btnRect.center.x - btnRect.width/2, btnRect.center.y - btnRect.height/4, btnRect.width, btnRect.height/1.5);
+            });
+            let btn = new Entity({
+                name : `btn-${LevelParser.random(0, 10000)}`,
+                body : btnRect,
+                sprite : s
+            });
+            btn.props = {
+                laser : laser
+            }
+            btns.push(btn);
+            btn.CollidingGroups.clear();
+            btn.AddCollision("d-big", (e)=>{
+                btn.props.laser.props.active = false;
+                if(e.props.played2){
+                    audio.play();
+                    btn.props.e = e;
+                    e.props.played2 = false;
+                }
+            });
+            btn.AddCollision("d-small", (e)=>{
+                btn.props.laser.props.active = false;
+                if(e.props.played2){
+                    btn.props.e = e;
+                    audio.play();
+                    e.props.played2 = false;
+                }
+            });
+            btn.AddCollision("d-tall", (e)=>{
+                laser.props.active = false;
+                if(e.props.played2){
+                    btn.props.e = e;
+                    audio.play();
+                    e.props.played2 = false;
+                }
+            });
+            btn.AddCollision("d-box", (e)=>{
+                laser.props.active = false;
+                if(e.props.played2){
+                    btn.props.e = e;
+                    audio.play();
+                    e.props.played2 = false;
+                }
+            });
+            scene.AddEntity(btn);
+        }
+        return [lasers, btns];
+    }
+
     getPortal(portal, name = "portal"){
         let p;
         for(let i = 0; i < portal.length; i++){
@@ -1050,10 +1230,11 @@ const Phygo = (function(){
     getBoxes(portal, img){
         let p = [];
         for(let i = 0; i <= portal.length-4; i += 4){
-            let pB  = new Rectangle(new Vector(portal[0], portal[1]), portal[2], portal[3]);
+            let pB  = new Rectangle(new Vector(portal[i], portal[i + 1]), portal[i + 2], portal[i + 3]);
             pB.friction = 0.8;
             pB.acceleration.y = 800;
-            pB.mass = 1;
+            pB.mass = 2;
+            pB.bounce = 0.1;
             pB.inertia = Infinity;
             let tex = new Texture({
                 image : img,
@@ -1074,7 +1255,7 @@ const Phygo = (function(){
         return p;
     }
 
-    getEntities(levelCover){
+    getEntities(){
             let entitites = [];
             for(let i = 0; i <= this.levelData.length - 4; i += 4){
                 let b = new Rectangle(new Vector(this.levelData[i], this.levelData[i + 1]), this.levelData[i + 2], this.levelData[i + 3]);
@@ -1093,25 +1274,30 @@ const Phygo = (function(){
                 });
                 entitites.push(e);
             }
-            for(let i = 0; i <= levelCover.length - 4; i += 4){
-                let b = new Rectangle(new Vector(levelCover[i], levelCover[i + 1]), levelCover[i + 2], levelCover[i + 3]);
-                b.mass = Infinity;
-                b.inertia = Infinity;
-                let sprite = new Paint({
-                    center : b.center,
-                    width : b.width,
-                    height : b.height,
-                    color : "rgb(30, 30, 30)",
-                    strokeStyle : "Red"
-                });
-                let e = new Entity({
-                    name : `plat-${LevelParser.random(0, 1000000)}`,
-                    body : b,
-                    sprite : sprite
-                });
-                entitites.push(e);
-            }
             return entitites;
+    }
+
+    getCover(levelCover){
+        let entities = [];
+        for(let i = 0; i <= levelCover.length - 4; i += 4){
+            let b = new Rectangle(new Vector(levelCover[i], levelCover[i + 1]), levelCover[i + 2], levelCover[i + 3]);
+            b.mass = Infinity;
+            b.inertia = Infinity;
+            let sprite = new Paint({
+                center : b.center,
+                width : b.width,
+                height : b.height,
+                color : "rgb(30, 30, 30)",
+                strokeStyle : "Red"
+            });
+            let e = new Entity({
+                name : `plat-${LevelParser.random(0, 1000000)}`,
+                body : b,
+                sprite : sprite
+            });
+            entities.push(e);
+        }
+        return entities;
     }
 
     }
@@ -1153,6 +1339,7 @@ const Phygo = (function(){
             this.sceneTrans = true;
             this.sceneTransName = name;
             this._tt = 0;
+            this._ran = false;
         }
 
         _Loop = () => {
@@ -1166,6 +1353,7 @@ const Phygo = (function(){
                 for(let i = 0; i < this._ScreenNames.length; i++){
                     this.Layers[this._ScreenNames[i]]._Resize();
                 }
+                this.Update(this._Dt, this.Scenes[this.CurrentScene]);
                 DrawUtil.Clear(this.Screen.Main.getContext("2d"));
                 this.Scenes[this.CurrentScene].Camera.Draw(()=>{
                     this.Draw(this.Screen.Main.getContext("2d"));
@@ -1175,7 +1363,10 @@ const Phygo = (function(){
                     let c = this.Screen.Main.getContext("2d");
                     this._tt -= 0.03;
                     if(this._tt <= -Math.PI/2){
-                        this.sceneTransName();
+                        if(!this._ran){
+                            this.sceneTransName();
+                            this._ran = true;
+                        }
                     }
                     if(this._tt <= -Math.PI){
                         this.sceneTrans = false;
@@ -1184,7 +1375,6 @@ const Phygo = (function(){
                     c.fillRect(0, 0, this.Screen.Main.width, this.Screen.Main.height);
                 }
                 this.DrawTopLayers(this.Screen.Main.getContext("2d"));
-                this.Update(this._Dt, this.Scenes[this.CurrentScene]);
                 this._t0 = this._t1;
             }
         }
@@ -1893,6 +2083,11 @@ const Phygo = (function(){
             this.w = w;
             this.h = h;
             this.text = text;
+            if(this.text == "Locked"){
+                this.enabled = false;
+            }else{
+                this.enabled = true;
+            }
             this.state = new _JS_State();
             this._stuffInit = false;
             this._isImageAva = false;
@@ -1930,7 +2125,9 @@ const Phygo = (function(){
                         if(x >= this.x && x <= this.x + this.w && y >= this.y && y <= this.y + this.h){
                             this.state.id = e.pointerId;
                             this.state.on = true;
-                            this.onclick();
+                            if(this.enabled){
+                                this.onclick();
+                            }
                         }
                     }
                 });
@@ -1945,7 +2142,7 @@ const Phygo = (function(){
                         x -= cam.pos.x;
                         y -= cam.pos.y;
                         if(x >= this.x && x <= this.x + this.w && y >= this.y && y <= this.y + this.h){
-                            if(this.state.on){
+                            if(this.state.on && this.enabled){
                                 this.onrelease();
                             }
                         }
